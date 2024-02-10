@@ -1,72 +1,41 @@
+// Import required libraries
+const baileys = require('@adiwajshing/baileys');
+const scraper = require('scraper');
 
-import { youtubedl, youtubedlv2 } from '@bochilteam/scraper'
-import yts from 'yt-search'
-var handler = async (m, { conn, command, text, usedPrefix }) => {
-  if (!text) throw `Use example ${usedPrefix}${command} naruto blue bird`
-  await m.reply(wait)
-  let search = await yts(text)
-  let vid = search.videos[Math.floor(Math.random() * search.videos.length)]
-  if (!search) throw 'Video Not Found, Try Another Title'
-  let { title, thumbnail, timestamp, views, ago, url } = vid
-  let wm = 'Downloading audio please wait'
+// Create a new instance of WhatsApp bot
+const bot = new baileys.WAConnection();
 
-  let captvid = `╭──── 〔 Y O U T U B E 〕 ─⬣
-⬡ Title: ${title}
-⬡ Duration: ${timestamp}
-⬡ Views: ${views}
-⬡ Upload: ${ago}
-⬡ Link: ${url}
-╰────────⬣`
-  conn.sendButton(m.chat, `╭──── 〔 Y O U T U B E 〕 ─⬣
-⬡ Title: ${title}
-⬡ Duration: ${timestamp}
-⬡ Views: ${views}
-⬡ Upload: ${ago}
-⬡ Link: ${url}
-╰────────⬣`, author.trim(), await( await conn.getFile(thumbnail)).data, ['VIDEO', `${usedPrefix}ytmp4 ${url}`], false, { quoted: m, 'document': { 'url':'https://wa.me/917605902011' },
-'mimetype': global.dpdf,
-'fileName': `𝔾𝕌ℝ𝕌 ℙ𝕃𝔸𝕐𝔼ℝ`,
-'fileLength': 666666666666666,
-'pageCount': 666,contextInfo: { externalAdReply: { showAdAttribution: true,
-mediaType:  2,
-mediaUrl: `${url}`,
-title: `AUDIO IS BEING SENT...`,
-body: wm,
-sourceUrl: 'http://wa.me/917605902011', thumbnail: await ( await conn.getFile(thumbnail)).data
+// Connect to WhatsApp server
+bot.connect();
+
+// Event listener for incoming messages
+bot.on('chat-update', async (chat) => {
+  // Check if the message is from a group or individual chat
+  if (chat.jid.includes('@g.us')) {
+    // Message is from a group chat
+    const message = chat.messages.all()[0];
+    const groupJid = message.key.remoteJID;
+    const senderJid = message.participant;
+    const text = message.message.conversation;
+
+    // Check if the message contains a command to play music
+    if (text.startsWith('.play')) {
+      // Extract the song name from the command
+      const songName = text.substring(6).trim();
+
+      // Use the scraper library to search for the song on a music website
+      const searchResults = await scraper.search(songName);
+
+      // Get the first search result
+      const firstResult = searchResults[0];
+
+      // Send a message to the group chat with the song details and a link to play the song
+      const songDetails = `Title: ${firstResult.title}\nArtist: ${firstResult.artist}\nDuration: ${firstResult.duration}`;
+      const songLink = firstResult.link;
+      bot.sendMessage(groupJid, `${songDetails}\n\n${songLink}`);
+    }
+  } else {
+    // Message is from an individual chat
+    // Handle individual chat messages here
   }
- } 
-})
-  
-  //let buttons = [{ buttonText: { displayText: '📽VIDEO' }, buttonId: `${usedPrefix}ytv ${url} 360` }]
- //let msg = await conn.sendMessage(m.chat, { image: { url: thumbnail }, caption: captvid, footer: author, buttons }, { quoted: m })
-
-  const yt = await youtubedlv2(url).catch(async _ => await youtubedl(url))
-const link = await yt.audio['128kbps'].download()
-  let doc = { 
-  audio: 
-  { 
-    url: link 
-}, 
-mimetype: 'audio/mp4', fileName: `${title}`, contextInfo: { externalAdReply: { showAdAttribution: true,
-mediaType:  2,
-mediaUrl: url,
-title: title,
-body: wm,
-sourceUrl: url,
-thumbnail: await(await conn.getFile(thumbnail)).data                                                                     
-                                                                                                                 }
-                       }
-  }
-
-  return conn.sendMessage(m.chat, doc, { quoted: m })
-	// return conn.sendMessage(m.chat, { document: { url: link }, mimetype: 'audio/mpeg', fileName: `${title}.mp3`}, { quoted: m})
-	// return await conn.sendFile(m.chat, link, title + '.mp3', '', m, false, { asDocument: true })
-}
-handler.help = ['play'].map(v => v + ' <query>')
-handler.tags = ['downloader']
-handler.command = /^play$/i
-
-handler.exp = 0
-handler.diamond = false
-
-export default handler
+});
